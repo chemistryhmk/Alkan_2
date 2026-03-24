@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Алканы — тренажёр к экзамену</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#0f172a;font-family:Arial,sans-serif;color:#f8fafc}
+#app{width:100%;min-height:100vh;background:#0f172a;display:flex;flex-direction:column}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+var TASKS=[
+{type:'choice',sec:'Строение',q:'Почему алканы называют предельными (насыщенными) углеводородами?',
+opts:['Содержат только одинарные C–C и C–H связи, нет π-связей','Содержат двойные C=C связи','Хорошо растворяются в воде','Реагируют с кислотами и щелочами'],
+ans:0,ok:'Верно! Предельные = только σ-связи, нет π-связей. Реакции присоединения невозможны.',ng:'Неверно. Предельные = только одинарные σ-связи C–C и C–H, нет π-связей.'},
+
+{type:'choice',sec:'Строение',q:'Чему равна молекулярная формула гексана (CₙH₂ₙ₊₂, n=6)?',
+opts:['C₆H₁₄','C₆H₁₂','C₆H₁₀','C₆H₁₆'],
+ans:0,ok:'Верно! 2×6+2=14 → C₆H₁₄. Ряд: CH₄, C₂H₆, C₃H₈, C₄H₁₀, C₅H₁₂, C₆H₁₄',ng:'Неверно. CₙH₂ₙ₊₂: n=6 → 2×6+2=14 → C₆H₁₄. C₆H₁₂ — это алкен или циклоалкан.'},
+
+{type:'choice',sec:'Свойства',q:'Что произойдёт, если пропустить пропан через раствор KMnO₄?',
+opts:['Раствор обесцветится','Ничего — алканы не реагируют с KMnO₄','Выпадет осадок MnO₂','Образуется пропанол'],
+ans:1,ok:'Верно! Алканы не обесцвечивают KMnO₄ — качественная реакция отличия от непредельных.',ng:'Неверно! Алканы не реагируют с KMnO₄. Ключевой экзаменационный факт.'},
+
+{type:'balance',sec:'Горение',q:'Полное горение пропана — расставь коэффициенты:',
+eq:'__ C₃H₈  +  __ O₂  →  __ CO₂  +  __ H₂O',
+fields:[{l:'перед C₃H₈',a:'1'},{l:'перед O₂',a:'5'},{l:'перед CO₂',a:'3'},{l:'перед H₂O',a:'4'}],
+ok:'Верно! C₃H₈+5O₂→3CO₂+4H₂O. 3C→3CO₂; 8H→4H₂O; O:6+4=10→5O₂.',ng:'Неверно. C₃H₈+5O₂→3CO₂+4H₂O. Сначала C и H, затем O₂.'},
+
+{type:'balance',sec:'Горение',q:'Полное горение бутана — расставь коэффициенты (перед C₄H₁₀ = 2):',
+eq:'__ C₄H₁₀  +  __ O₂  →  __ CO₂  +  __ H₂O',
+fields:[{l:'перед C₄H₁₀',a:'2'},{l:'перед O₂',a:'13'},{l:'перед CO₂',a:'8'},{l:'перед H₂O',a:'10'}],
+ok:'Верно! 2C₄H₁₀+13O₂→8CO₂+10H₂O. Умножаем на 2 — нет дроби.',ng:'Неверно. 2C₄H₁₀+13O₂→8CO₂+10H₂O. O справа:16+10=26→13O₂.'},
+
+{type:'choice',sec:'Механизм SR',q:'В механизме радикального замещения SR — что такое стадия «рост цепи»?',
+opts:[
+  'Cl₂ → 2Cl•  (инициирование под действием hν)',
+  'Cl• + CH₄ → HCl + CH₃•;  затем  CH₃• + Cl₂ → CH₃Cl + Cl•',
+  'CH₃• + Cl• → CH₃Cl  (два радикала встречаются)',
+  'Cl• + Cl• → Cl₂  (два радикала встречаются)'
+],
+ans:1,
+ok:'Верно! Рост цепи — два шага самовоспроизводства: Cl•+CH₄→HCl+CH₃•; CH₃•+Cl₂→CH₃Cl+Cl•. Цикл повторяется тысячи раз.',
+ng:'Неверно. Рост цепи (propagation): Cl•+CH₄→HCl+CH₃•; CH₃•+Cl₂→CH₃Cl+Cl•. Варианты В и Г — это ОБРЫВ цепи (termination): два радикала встречаются и нейтрализуют друг друга.'},
+
+{type:'balance',sec:'Горение',q:'Неполное горение метана (образуется угарный газ CO):',
+eq:'__ CH₄  +  __ O₂  →  __ CO  +  __ H₂O',
+fields:[{l:'перед CH₄',a:'2'},{l:'перед O₂',a:'3'},{l:'перед CO',a:'2'},{l:'перед H₂O',a:'4'}],
+ok:'Верно! 2CH₄+3O₂→2CO+4H₂O. CO — угарный газ, опасен!',ng:'Неверно. 2CH₄+3O₂→2CO+4H₂O. Проверка O: 6=2+4 ✓'},
+
+{type:'fill',sec:'Галогенирование',q:'Хлорирование метана — 1-я ступень (свет). Запиши оба продукта:',
+given:'CH₄  +  Cl₂  —(hν)→  ?  +  ?',
+fields:[{l:'Органический продукт',a:'ch3cl',a2:'хлорметан'},{l:'Неорганический продукт',a:'hcl',a2:'хлороводород'}],
+ok:'Верно! CH₄+Cl₂—hν→CH₃Cl+HCl. Механизм SR: Cl₂→2Cl•→цепная реакция.',ng:'Неверно. Продукты: CH₃Cl+HCl. Механизм SR, инициируется УФ-светом.'},
+
+{type:'fill',sec:'Галогенирование',q:'Вторая ступень хлорирования — запиши органический продукт:',
+given:'CH₃Cl  +  Cl₂  —(hν)→  ?  +  HCl',
+fields:[{l:'Органический продукт',a:'ch2cl2',a2:'дихлорметан'}],
+ok:'Верно! CH₃Cl+Cl₂→CH₂Cl₂+HCl. Ряд: CH₄→CH₃Cl→CH₂Cl₂→CHCl₃→CCl₄',ng:'Неверно. CH₂Cl₂ (дихлорметан). Каждая ступень заменяет H на Cl.'},
+
+{type:'fill',sec:'Нитрование',q:'Нитрование этана (Коновалов). Запиши органический продукт:',
+given:'C₂H₆  +  HNO₃(разб.)  —(140°C)→  ?  +  H₂O',
+fields:[{l:'Нитроалкан',a:'c2h5no2',a2:'нитроэтан'}],
+ok:'Верно! C₂H₆+HNO₃→C₂H₅NO₂+H₂O. Условия: 10% HNO₃, 140°C, радикальный механизм.',ng:'Неверно. Продукт: C₂H₅NO₂ (нитроэтан). Условия Коновалова: 10% HNO₃, 140°C.'},
+
+{type:'fill',sec:'Дегидрирование',q:'Дегидрирование этана — запиши оба продукта:',
+given:'C₂H₆  —(Ni, t°)→  ?  +  ?',
+fields:[{l:'Алкен',a:'c2h4',a2:'этилен'},{l:'Второй продукт',a:'h2',a2:'водород'}],
+ok:'Верно! C₂H₆→C₂H₄+H₂. Дегидрирование = отщепление H₂, алкан→алкен.',ng:'Неверно. C₂H₆→C₂H₄+H₂. Дегидрирование — отщепление H₂, образуется C=C.'},
+
+{type:'fill',sec:'Реакция Вюрца',q:'Синтез бутана из хлорэтана (Вюрц) — запиши оба продукта:',
+given:'2 C₂H₅Cl  +  2Na  →  ?  +  ?',
+fields:[{l:'Органический продукт',a:'c4h10',a2:'бутан'},{l:'Соль',a:'2nacl',a2:'nacl'}],
+ok:'Верно! 2C₂H₅Cl+2Na→C₄H₁₀+2NaCl. Вюрц = удлинение цепи вдвое.',ng:'Неверно. Продукты: C₄H₁₀+2NaCl. Вюрц удваивает цепь: 2×C₂→C₄.'},
+
+{type:'fill',sec:'Реакция Дюма',q:'Декарбоксилирование ацетата натрия (Дюма) — запиши органический продукт:',
+given:'CH₃COONa  +  NaOH  —(t°)→  ?  +  Na₂CO₃',
+fields:[{l:'Органический газ',a:'ch4',a2:'метан'}],
+ok:'Верно! CH₃COONa+NaOH→CH₄+Na₂CO₃. Дюма = укорочение цепи на 1 атом C.',ng:'Неверно. Продукт: CH₄ (метан). Дюма: сплавление с NaOH → алкан.'},
+
+{type:'fill',sec:'Гидролиз карбида',q:'Гидролиз карбида алюминия — запиши органический продукт с коэффициентом:',
+given:'Al₄C₃  +  12H₂O  →  ?  +  4Al(OH)₃',
+fields:[{l:'Органический продукт',a:'3ch4',a2:'3 ch4'}],
+ok:'Верно! Al₄C₃+12H₂O→3CH₄+4Al(OH)₃. 1 моль Al₄C₃ → 3 моля CH₄.',ng:'Неверно. Продукт: 3CH₄. Коэффициент 3 важен для расчётных задач!'},
+
+{type:'fill',sec:'Крекинг',q:'Термический крекинг гексана — запиши недостающий алкан:',
+given:'C₆H₁₄  —(450°C, Al₂O₃)→  ?  +  C₃H₆',
+fields:[{l:'Алкан',a:'c3h8',a2:'пропан'}],
+ok:'Верно! C₆H₁₄→C₃H₈+C₃H₆. Крекинг: алкан→алкан+алкен. C:6=3+3 ✓',ng:'Неверно. C₃H₈ (пропан). Крекинг всегда даёт алкан+алкен.'},
+
+{type:'fill',sec:'Каталитическое окисление',q:'Каталитическое окисление метана до метанола — запиши продукт:',
+given:'2 CH₄  +  O₂  —(Cu, t°)→  ?',
+fields:[{l:'Продукт (спирт)',a:'2ch3oh',a2:'метанол'}],
+ok:'Верно! 2CH₄+O₂→2CH₃OH. Мягкое окисление → спирт.',ng:'Неверно. 2CH₃OH (метанол). 2CH₄+O₂—Cu,t°→2CH₃OH.'},
+
+{type:'choice',sec:'Механизм SR',q:'Почему CH₄+Cl₂ протекает на свету, но не в темноте?',
+opts:['Свет нагревает смесь до нужной температуры','Фотоны разрывают Cl–Cl связь, генерируя радикалы Cl•','Свет активирует молекулу CH₄','Cl₂ становится ионом Cl⁻'],
+ans:1,ok:'Верно! hν разрывает Cl₂→2Cl•. Без радикалов цепная реакция не запускается.',ng:'Неверно. Свет (hν) разрывает Cl₂→2Cl•. В темноте инициирования нет.'},
+
+{type:'match',sec:'Условия реакций',q:'Сопоставь каждую реакцию с условиями проведения:',
+pairs:[
+  {l:'Галогенирование',opts:['hν или t°','140°C, HNO₃ 10%','450°C, Al₂O₃','100°C, AlCl₃','Ni/Pd, t°'],a:0},
+  {l:'Нитрование (Коновалов)',opts:['hν или t°','140°C, HNO₃ 10%','450°C, Al₂O₃','100°C, AlCl₃','Ni/Pd, t°'],a:1},
+  {l:'Крекинг',opts:['hν или t°','140°C, HNO₃ 10%','450°C, Al₂O₃','100°C, AlCl₃','Ni/Pd, t°'],a:2},
+  {l:'Изомеризация',opts:['hν или t°','140°C, HNO₃ 10%','450°C, Al₂O₃','100°C, AlCl₃','Ni/Pd, t°'],a:3},
+  {l:'Дегидрирование',opts:['hν или t°','140°C, HNO₃ 10%','450°C, Al₂O₃','100°C, AlCl₃','Ni/Pd, t°'],a:4}
+],
+ok:'Отлично! Галогенирование=hν; нитрование=140°C; крекинг=450°C; изомеризация=AlCl₃; дегидрирование=Ni.',ng:'Есть ошибки. Галогенирование→hν; нитрование→140°C,HNO₃10%; крекинг→450°C,Al₂O₃; изомеризация→AlCl₃; дегидрирование→Ni,t°.'},
+
+{type:'choice',sec:'Правило замещения',q:'При бромировании изобутана — у какого атома C замещение идёт первым?',
+opts:['У первичных (–CH₃)','У вторичного (–CH₂–)','У третичного (>CH–)','Равновероятно у всех'],
+ans:2,ok:'Верно! 3°>2°>1°. Третичный радикал наиболее стабилен.',ng:'Неверно. 3°>2°>1°. Третичный атом реагирует первым.'},
+
+{type:'choice',sec:'Изомеризация',q:'Продукт изомеризации н-пентана при 100°C, AlCl₃:',
+opts:['2-метилбутан (изопентан)','Пентен','Пентин','Циклопентан'],
+ans:0,ok:'Верно! н-Пентан→2-метилбутан. Состав C₅H₁₂ не меняется, меняется структура.',ng:'Неверно. Продукт: 2-метилбутан (изопентан). Состав C₅H₁₂ сохраняется.'},
+
+{type:'choice',sec:'Применение',q:'Какие алканы используются как жидкое топливо (бензин, дизель)?',
+opts:['C₁–C₄ (газы)','C₅–C₁₅ (жидкости)','C₁₆–C₁₈ (вазелин)','C₁₉–C₃₅ (парафин)'],
+ans:1,ok:'Верно! C₅–C₁₅ — жидкие. Бензин C₅–C₁₀, дизель C₁₁–C₁₅.',ng:'Неверно. Жидкие: C₅–C₁₅. Газы: C₁–C₄; вазелин: C₁₆–C₁₈; парафин: C₁₉–C₃₅.'},
+
+{type:'balance',sec:'Горение',q:'Полное горение этана C₂H₆ — расставь коэффициенты:',
+eq:'__ C₂H₆  +  __ O₂  →  __ CO₂  +  __ H₂O',
+fields:[{l:'перед C₂H₆',a:'2'},{l:'перед O₂',a:'7'},{l:'перед CO₂',a:'4'},{l:'перед H₂O',a:'6'}],
+ok:'Верно! 2C₂H₆+7O₂→4CO₂+6H₂O. C:4; H:12→6H₂O; O:8+6=14→7O₂.',ng:'Неверно. 2C₂H₆+7O₂→4CO₂+6H₂O. Умножаем на 2 — нет дроби.'},
+
+{type:'chain',sec:'Цепочка превращений',q:'Укажи реагент/условие для каждого шага цепочки:',
+steps:[
+  {f:'CH₃COONa',t:'CH₄',opts:['NaOH, t°','Cl₂, hν','2Na','Ni, t°'],a:0},
+  {f:'CH₄',t:'CH₃Cl',opts:['NaOH, t°','Cl₂, hν','2Na','Ni, t°'],a:1},
+  {f:'2CH₃Cl',t:'C₂H₆',opts:['NaOH, t°','Cl₂, hν','2Na','Ni, t°'],a:2},
+  {f:'C₂H₆',t:'C₂H₄',opts:['NaOH, t°','Cl₂, hν','2Na','Ni, t°'],a:3}
+],
+ok:'Отлично! Дюма→галогенирование→Вюрц→дегидрирование. Классический маршрут!',ng:'Есть ошибки. Маршрут: NaOH,t°→Cl₂,hν→2Na(Вюрц)→Ni,t°.'},
+
+{type:'choice',sec:'Промышленный синтез',q:'Процесс Фишера-Тропша — синтез алканов из:',
+opts:['Нефти путём перегонки','CO и H₂ (синтез-газ)','Угля прямым гидрированием (Бергиус)','Природного газа декарбоксилированием'],
+ans:1,ok:'Верно! Фишер-Тропш: nCO+(2n+1)H₂→CₙH₂ₙ₊₂+nH₂O. Бергиус — другой процесс.',ng:'Неверно. Фишер-Тропш: CO+H₂→алканы. Бергиус — прямое гидрирование угля.'},
+
+{type:'choice',sec:'Расчётная задача',q:'При сжигании алкана получили 8,8 г CO₂ и 5,4 г H₂O. M(CO₂)=44, M(H₂O)=18. Какой это алкан?',
+opts:['CH₄ — метан','C₂H₆ — этан','C₃H₈ — пропан','C₄H₁₀ — бутан'],
+ans:1,ok:'Верно! n(CO₂)=0,2 моль→0,2C; n(H₂O)=0,3 моль→0,6H. C:H=1:3 → C₂H₆. Проверка: 0,1 моль C₂H₆→0,2 моль CO₂(8,8г)+0,3 моль H₂O(5,4г) ✓',ng:'Неверно. n(CO₂)=0,2→0,2C; n(H₂O)=0,3→0,6H. C:H=1:3 → C₂H₆ (этан). Ответ: C₂H₆.'}
+];
+
+var cur=0,corr=0,errs=0,done=false;
+function $(id){return document.getElementById(id);}
+
+function build(){
+  var app=$('app');
+  app.innerHTML='';
+
+  var top=ce('div','background:#1e293b;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #38bdf8');
+  top.innerHTML='<span style="font-size:18px;font-weight:700;color:#f0f9ff">Алканы — тренажёр к экзамену</span><span id="ctr" style="font-size:15px;color:#94a3b8">'+(cur+1)+' / '+TASKS.length+'</span>';
+  app.appendChild(top);
+
+  var pb=ce('div','height:7px;background:#1e293b;width:100%');
+  pb.innerHTML='<div id="pf" style="height:7px;background:#38bdf8;width:'+Math.round((cur+1)/TASKS.length*100)+'%;transition:width .3s"></div>';
+  app.appendChild(pb);
+
+  var st=ce('div','display:flex;background:#1e293b;border-bottom:2px solid #334155');
+  [{id:'sv',v:corr,c:'#4ade80',l:'ВЕРНО'},{id:'se',v:errs,c:'#f87171',l:'ОШИБКИ'},{id:'sl',v:TASKS.length-cur,c:'#e2e8f0',l:'ОСТАЛОСЬ'},{id:'sp',v:(corr+errs>0?Math.round(corr/(corr+errs)*100):0)+'%',c:'#38bdf8',l:'РЕЗУЛЬТАТ'}].forEach(function(x,i){
+    var s=ce('div','flex:1;padding:13px 0;text-align:center'+(i<3?';border-right:1px solid #334155':''));
+    s.innerHTML='<div id="'+x.id+'" style="font-size:28px;font-weight:700;color:'+x.c+'">'+x.v+'</div><div style="font-size:11px;color:#64748b;margin-top:2px;letter-spacing:.06em">'+x.l+'</div>';
+    st.appendChild(s);
+  });
+  app.appendChild(st);
+
+  var main=ce('div','padding:28px 26px 24px;flex:1');
+  main.id='main';
+  app.appendChild(main);
+
+  var bot=ce('div','padding:16px 26px;display:flex;justify-content:space-between;align-items:center;background:#1e293b;border-top:2px solid #334155');
+  bot.innerHTML='<button id="skipbtn" onclick="skip()" style="padding:11px 22px;background:transparent;color:#94a3b8;border:1px solid #475569;border-radius:9px;font-size:15px;cursor:pointer;font-family:Arial">Пропустить</button><button id="nb" onclick="nxt()" style="display:none;padding:14px 36px;background:#0ea5e9;color:#fff;border:none;border-radius:10px;font-size:18px;cursor:pointer;font-weight:700;font-family:Arial">Следующее →</button>';
+  app.appendChild(bot);
+
+  renderTask();
+}
+
+function ce(tag,css){var el=document.createElement(tag);el.style.cssText=css;return el;}
+
+function renderTask(){
+  if(cur>=TASKS.length){showRes();return;}
+  done=false;
+  if($('nb'))$('nb').style.display='none';
+  if($('skipbtn'))$('skipbtn').style.display='';
+  if($('ctr'))$('ctr').textContent=(cur+1)+' / '+TASKS.length;
+  if($('pf'))$('pf').style.width=Math.round((cur+1)/TASKS.length*100)+'%';
+  updStats();
+
+  var t=TASKS[cur];
+  var m=$('main');
+  if(!m)return;
+  m.innerHTML='';
+
+  var badge=ce('div','margin-bottom:12px');
+  badge.innerHTML='<span style="background:#0c4a6e;color:#7dd3fc;font-size:13px;font-weight:700;padding:5px 16px;border-radius:20px;letter-spacing:.05em">'+t.sec+'</span>';
+  m.appendChild(badge);
+
+  var q=ce('div','font-size:21px;color:#f1f5f9;line-height:1.6;margin-bottom:26px;font-weight:400');
+  q.textContent=t.q;
+  m.appendChild(q);
+
+  if(t.type==='choice'){
+    for(var i=0;i<t.opts.length;i++){
+      var b=ce('div','margin-bottom:13px;padding:17px 22px;border:2px solid #334155;border-radius:13px;background:#1e293b;color:#e2e8f0;font-size:18px;cursor:pointer;line-height:1.5');
+      b.id='ob'+i;
+      b.innerHTML='<span style="color:#38bdf8;font-weight:700;margin-right:12px">'+String.fromCharCode(65+i)+')</span>'+t.opts[i];
+      b.onclick=(function(idx){return function(){chkC(idx);};})(i);
+      m.appendChild(b);
+    }
+  } else if(t.type==='balance'){
+    var eq=ce('div','background:#1e293b;border:1px solid #475569;border-radius:11px;padding:15px 20px;font-size:19px;color:#e2e8f0;margin-bottom:22px;font-family:monospace');
+    eq.textContent=t.eq;
+    m.appendChild(eq);
+    for(var i=0;i<t.fields.length;i++){
+      var row=ce('div','margin-bottom:13px');
+      var lbl=ce('div','font-size:15px;color:#94a3b8;margin-bottom:6px');
+      lbl.textContent='Коэффициент '+t.fields[i].l+':';
+      var inp=document.createElement('input');
+      inp.type='text'; inp.id='f'+i; inp.autocomplete='off'; inp.placeholder='число';
+      inp.style.cssText='width:180px;padding:13px 16px;border:2px solid #334155;border-radius:9px;background:#1e293b;color:#f1f5f9;font-size:18px;font-family:monospace;display:block';
+      row.appendChild(lbl); row.appendChild(inp);
+      m.appendChild(row);
+    }
+    var btn=ce('button','margin-top:10px;padding:14px 34px;background:#0369a1;color:#fff;border:none;border-radius:10px;font-size:17px;cursor:pointer;font-weight:600;font-family:Arial');
+    btn.textContent='Проверить'; btn.onclick=chkBal;
+    m.appendChild(btn);
+  } else if(t.type==='fill'){
+    var eq=ce('div','background:#1e293b;border:1px solid #475569;border-radius:11px;padding:15px 20px;font-size:19px;color:#e2e8f0;margin-bottom:22px;font-family:monospace');
+    eq.textContent=t.given;
+    m.appendChild(eq);
+    for(var i=0;i<t.fields.length;i++){
+      var row=ce('div','margin-bottom:13px');
+      var lbl=ce('div','font-size:15px;color:#94a3b8;margin-bottom:6px');
+      lbl.textContent=t.fields[i].l+':';
+      var inp=document.createElement('input');
+      inp.type='text'; inp.id='f'+i; inp.autocomplete='off'; inp.placeholder='введи формулу';
+      inp.style.cssText='width:100%;max-width:340px;padding:13px 16px;border:2px solid #334155;border-radius:9px;background:#1e293b;color:#f1f5f9;font-size:18px;font-family:monospace;display:block';
+      row.appendChild(lbl); row.appendChild(inp);
+      m.appendChild(row);
+    }
+    var btn=ce('button','margin-top:10px;padding:14px 34px;background:#0369a1;color:#fff;border:none;border-radius:10px;font-size:17px;cursor:pointer;font-weight:600;font-family:Arial');
+    btn.textContent='Проверить'; btn.onclick=chkFill;
+    m.appendChild(btn);
+  } else if(t.type==='match'){
+    for(var i=0;i<t.pairs.length;i++){
+      var row=ce('div','display:flex;align-items:center;gap:14px;margin-bottom:13px;flex-wrap:wrap');
+      var lbl=ce('span','min-width:210px;font-size:17px;color:#e2e8f0;font-weight:500');
+      lbl.textContent=t.pairs[i].l;
+      var sel=document.createElement('select');
+      sel.id='ms'+i;
+      sel.style.cssText='padding:11px 14px;border:2px solid #334155;border-radius:9px;background:#1e293b;color:#e2e8f0;font-size:16px;flex:1;min-width:190px;font-family:Arial';
+      var opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— выбери —'; sel.appendChild(opt0);
+      for(var j=0;j<t.pairs[i].opts.length;j++){
+        var opt=document.createElement('option'); opt.value=j; opt.textContent=t.pairs[i].opts[j]; sel.appendChild(opt);
+      }
+      row.appendChild(lbl); row.appendChild(sel);
+      m.appendChild(row);
+    }
+    var btn=ce('button','margin-top:12px;padding:14px 34px;background:#0369a1;color:#fff;border:none;border-radius:10px;font-size:17px;cursor:pointer;font-weight:600;font-family:Arial');
+    btn.textContent='Проверить'; btn.onclick=chkMatch;
+    m.appendChild(btn);
+  } else if(t.type==='chain'){
+    var wrap=ce('div','display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:20px');
+    for(var i=0;i<t.steps.length;i++){
+      var n1=ce('span','background:#0c4a6e;color:#7dd3fc;border:2px solid #0369a1;border-radius:9px;padding:9px 14px;font-size:15px;font-weight:700');
+      n1.textContent=t.steps[i].f; wrap.appendChild(n1);
+      var sel=document.createElement('select');
+      sel.id='cs'+i;
+      sel.style.cssText='padding:8px 11px;border:2px solid #334155;border-radius:8px;background:#1e293b;color:#e2e8f0;font-size:14px;font-family:Arial';
+      var opt0=document.createElement('option'); opt0.value=''; opt0.textContent='?'; sel.appendChild(opt0);
+      for(var j=0;j<t.steps[i].opts.length;j++){
+        var opt=document.createElement('option'); opt.value=j; opt.textContent=t.steps[i].opts[j]; sel.appendChild(opt);
+      }
+      wrap.appendChild(sel);
+      var arr=ce('span','color:#64748b;font-size:22px'); arr.textContent='→'; wrap.appendChild(arr);
+      var n2=ce('span','background:#052e16;color:#86efac;border:2px solid #16a34a;border-radius:9px;padding:9px 14px;font-size:15px;font-weight:700');
+      n2.textContent=t.steps[i].t; wrap.appendChild(n2);
+      if(i<t.steps.length-1){var sep=ce('span','color:#475569;font-size:24px;margin:0 4px'); sep.textContent='|'; wrap.appendChild(sep);}
+    }
+    m.appendChild(wrap);
+    var btn=ce('button','padding:14px 34px;background:#0369a1;color:#fff;border:none;border-radius:10px;font-size:17px;cursor:pointer;font-weight:600;font-family:Arial');
+    btn.textContent='Проверить'; btn.onclick=chkChain;
+    m.appendChild(btn);
+  }
+
+  var fb=ce('div','display:none;margin-top:20px;padding:17px 22px;border-radius:13px;font-size:17px;line-height:1.6');
+  fb.id='fb'; m.appendChild(fb);
+}
+
+function updStats(){
+  if($('sv'))$('sv').textContent=corr;
+  if($('se'))$('se').textContent=errs;
+  if($('sl'))$('sl').textContent=TASKS.length-cur;
+  var tot=corr+errs;
+  if($('sp'))$('sp').textContent=(tot>0?Math.round(corr/tot*100):0)+'%';
+}
+
+function showFB(ok,msg){
+  var fb=$('fb'); if(!fb)return;
+  fb.style.display='block';
+  fb.style.background=ok?'#052e16':'#2d1515';
+  fb.style.border='2px solid '+(ok?'#22c55e':'#ef4444');
+  fb.style.color=ok?'#86efac':'#fca5a5';
+  fb.textContent=(ok?'✓  ':'✗  ')+msg;
+  if($('nb'))$('nb').style.display='inline-block';
+  if($('skipbtn'))$('skipbtn').style.display='none';
+  if(ok)corr++;else errs++;
+  done=true; updStats();
+}
+
+function chkC(i){
+  if(done)return;
+  var t=TASKS[cur];
+  for(var j=0;j<t.opts.length;j++){
+    var el=$('ob'+j); if(!el)continue;
+    el.onclick=null; el.style.cursor='default';
+    if(j===t.ans){el.style.background='#052e16';el.style.borderColor='#22c55e';el.style.color='#86efac';}
+    else if(j===i&&i!==t.ans){el.style.background='#2d1515';el.style.borderColor='#ef4444';el.style.color='#fca5a5';}
+    else el.style.opacity='0.35';
+  }
+  showFB(i===t.ans,i===t.ans?t.ok:t.ng);
+}
+
+function chkBal(){
+  if(done)return;
+  var t=TASKS[cur];var ok=true;
+  for(var i=0;i<t.fields.length;i++){
+    var el=$('f'+i);if(!el)continue;
+    if(el.value.trim()!==t.fields[i].a){ok=false;el.style.borderColor='#ef4444';el.style.background='#2d1515';el.style.color='#fca5a5';}
+    else{el.style.borderColor='#22c55e';el.style.background='#052e16';el.style.color='#86efac';}
+    el.disabled=true;
+  }
+  showFB(ok,ok?t.ok:t.ng);
+}
+
+function chkFill(){
+  if(done)return;
+  var t=TASKS[cur];var ok=true;
+  for(var i=0;i<t.fields.length;i++){
+    var el=$('f'+i);if(!el)continue;
+    var v=el.value.trim().toLowerCase().replace(/\s+/g,'');
+    var a1=(t.fields[i].a||'').toLowerCase().replace(/\s+/g,'');
+    var a2=(t.fields[i].a2||'').toLowerCase().replace(/\s+/g,'');
+    if(v!==a1&&v!==a2){ok=false;el.style.borderColor='#ef4444';el.style.background='#2d1515';el.style.color='#fca5a5';}
+    else{el.style.borderColor='#22c55e';el.style.background='#052e16';el.style.color='#86efac';}
+    el.disabled=true;
+  }
+  showFB(ok,ok?t.ok:t.ng);
+}
+
+function chkMatch(){
+  if(done)return;
+  var t=TASKS[cur];var ok=true;
+  for(var i=0;i<t.pairs.length;i++){
+    var el=$('ms'+i);if(!el)continue;
+    if(parseInt(el.value)!==t.pairs[i].a){ok=false;el.style.borderColor='#ef4444';el.style.background='#2d1515';el.style.color='#fca5a5';}
+    else{el.style.borderColor='#22c55e';el.style.background='#052e16';el.style.color='#86efac';}
+    el.disabled=true;
+  }
+  showFB(ok,ok?t.ok:t.ng);
+}
+
+function chkChain(){
+  if(done)return;
+  var t=TASKS[cur];var ok=true;
+  for(var i=0;i<t.steps.length;i++){
+    var el=$('cs'+i);if(!el)continue;
+    if(parseInt(el.value)!==t.steps[i].a){ok=false;el.style.borderColor='#ef4444';el.style.background='#2d1515';el.style.color='#fca5a5';}
+    else{el.style.borderColor='#22c55e';el.style.background='#052e16';el.style.color='#86efac';}
+    el.disabled=true;
+  }
+  showFB(ok,ok?t.ok:t.ng);
+}
+
+function nxt(){cur++;build();}
+function skip(){cur++;build();}
+
+function showRes(){
+  var pct=Math.round(corr/TASKS.length*100);
+  var g=pct>=90?'10 — отлично!':pct>=75?'8–9 — хорошо':pct>=60?'6–7 — нужно повторить':'5 и ниже — повтори тему';
+  var m=$('main');if(!m)return;
+  m.style.cssText='padding:28px 26px 24px;flex:1;display:flex;align-items:center;justify-content:center';
+  var inner=ce('div','text-align:center');
+  inner.innerHTML='<div style="font-size:26px;font-weight:700;color:#f1f5f9;margin-bottom:8px">Тренировка завершена!</div><div style="font-size:84px;font-weight:700;color:#38bdf8;margin:1rem 0">'+corr+'/'+TASKS.length+'</div><div style="display:inline-block;background:#0c4a6e;color:#7dd3fc;font-size:22px;font-weight:700;padding:13px 36px;border-radius:13px;margin-bottom:1.5rem">'+pct+'%  —  '+g+'</div><div style="font-size:17px;color:#94a3b8;margin-bottom:2rem">Верно: '+corr+'  ·  Ошибки: '+errs+'</div><div><button onclick="restart()" style="padding:15px 32px;background:#0ea5e9;color:#fff;border:none;border-radius:11px;font-size:17px;cursor:pointer;font-weight:700;margin:6px;font-family:Arial">Начать заново</button></div>';
+  m.appendChild(inner);
+  if($('nb'))$('nb').style.display='none';
+  if($('skipbtn'))$('skipbtn').style.display='none';
+  if($('ctr'))$('ctr').textContent='Готово!';
+  if($('pf'))$('pf').style.width='100%';
+  if($('sl'))$('sl').textContent='0';
+}
+
+function restart(){cur=0;corr=0;errs=0;done=false;build();}
+build();
+</script>
+</body>
+</html>
